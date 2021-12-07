@@ -56,4 +56,7 @@ if __name__ == "__main__":
         pop_means.append(np.mean(pop))
         population.pop = pop
     plt.plot(range(num_epochs), pop_means)
+    plt.xlabel("Generation")
+    plt.ylabel("Mean of population")
+    plt.title("Evolutionary Algorithm With Fitness defined as distance from 700")
     plt.show()
