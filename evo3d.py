@@ -4,11 +4,12 @@ import matplotlib.pyplot as plt
 
 
 class Population:
-    def __init__(self, pop_size, xmin, xmax, ymin, ymax):
+    def __init__(self, pop_size, xmin, xmax, ymin, ymax, constrain_range):
         self.xmin = xmin
         self.xmax = xmax
         self.ymin = ymin
         self.ymax = ymax
+        self.constrain_range=constrain_range
         self.pop = self.create_pop(pop_size)
         self.scores = np.zeros(shape=(pop_size))
         self.ax = plt.axes(projection ='3d')
@@ -39,7 +40,7 @@ class Population:
         for i, ind in enumerate(self.pop):
             self.scores[i] = self.fitness(ind[0], ind[1])
     
-    def select_from_batch(self, batch_size = 10):
+    def select_from_batch(self, batch_size = 2):
         select_coords = None
         select_score = -10000
         for i in np.random.randint(0, self.pop_size, batch_size):
@@ -59,7 +60,7 @@ class Population:
                 babies.append(self.mutate(self.create_baby(self.pop[i], self.pop[i+1])))
         if len(babies) > 0:
             self.pop = np.concatenate([self.pop, babies])
-        
+    
     @staticmethod
     def create_baby(ind1, ind2):
         x1, y1 = ind1.tolist()
@@ -70,21 +71,28 @@ class Population:
     def constrain(val, min_val, max_val):
         return min(max_val, max(min_val, val))
     
-    def in_range(self, ind):
-        return ind[0] >= self.xmin and ind[0] <= self.xmax and ind[1] >= self.ymin and ind[1] <= self.ymax
+    def in_range(self, ind, xmin, xmax, ymin, ymax):
+        return ind[0] >= xmin and ind[0] <= xmax and ind[1] >= ymin and ind[1] <= ymax
     
     def constrain_pop(self):
         new_pop = []
         for ind in self.pop:
-            if self.in_range(ind):
+            if self.in_range(ind, *self.constrain_range):
                 new_pop.append(ind)
         self.pop = np.array(new_pop)
 
-    def mutate(self, baby, p_mut = 0.5):
+    def mutate(self, baby, p_mut = 1):
         if random.uniform(0, 1) < p_mut:
-            baby[0] = baby[0]*random.uniform(-2, 2)#self.constrain(baby[0]*random.uniform(-1, 2), self.xmin, self.xmax)
-            baby[1] = baby[1]*random.uniform(-2, 2)#self.constrain(baby[1]*random.uniform(-1, 2), self.ymin, self.ymax)
+            baby[0] = baby[0]*random.uniform(-2, 2)
+            baby[1] = baby[1]*random.uniform(-2, 2)
         return baby
+
+    def evolve(self, num_gens):
+        for i in range(num_gens):
+            self.selection(int(self.pop_size/1.25))
+            self.reproduce()
+            self.constrain_pop()
+            self.score()
     
     def plot_optimal(self, xmin=0, xmax=0, ymin=0, ymax=0):
         x = np.arange(xmin, xmax, 0.2)
@@ -93,9 +101,9 @@ class Population:
         z = self.fitness(x, y)
         self.ax.plot_wireframe(x, y, z)
 
-    def plot_pop(self):
+    def plot_pop(self, num_gens):
         self.ax.scatter(self.x, self.y, self.scores, marker="x", c="red")
-        self.ax.set_title("Population after 6 Epoch")
+        self.ax.set_title("Starting Population")#f"Population after {num_gens} generations")
         self.ax.set_xlabel("X")
         self.ax.set_ylabel("Y")
         self.ax.set_zlabel("Fitness")
@@ -103,22 +111,11 @@ class Population:
 
 
 if __name__ == "__main__":
-    #xy_range = [-3, 4, -2, 4] 
-    # Use new constrained range
-    xy_range = [-1, 4, -2, 2]
-    pop = Population(1000, * xy_range)
-    pop.score()
-    epochs = 100
-    for i in range(epochs):
-        pop.selection(int(pop.pop_size/1.28))
-        print(pop.pop_size)
-        pop.reproduce()
-        print(pop.pop_size)
-        pop.score()
-        pop.constrain_pop()
-    pop.selection(int(pop.pop_size/1.3))
-    pop.score()
-    pop.constrain_pop()
-    pop.plot_pop()
+    full_range = [-3, 4, -2, 4] 
+    num_gens =  0
+    xy_range = [-2, 4, -2, 2]
+    pop = Population(1000, * xy_range, full_range)
+    pop.evolve(num_gens)
+    pop.plot_pop(num_gens)
     pop.plot_optimal(-3, 4, -2, 4)
     plt.show()
