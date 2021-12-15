@@ -7,6 +7,7 @@ import gym
 import numpy as np
 import random
 import matplotlib.pyplot as plt
+import time
 
 
 class Taxi:
@@ -42,6 +43,7 @@ class Taxi:
             new_state, reward, done, _ = self.env.step(action)
             if simulate:
                 self.env.render()
+                time.sleep(0.8)
             rewards += reward
             self.bellman(state, new_state, action, reward)
             state=new_state
@@ -81,13 +83,13 @@ class Taxi:
 
 if __name__ == "__main__":
     hyperparams = {
-        "alpha": 0.7,
+        "alpha": 0.6,
         "epsilon": 1,
         "epsilon_min": 0.1,
         "epsilon_max": 1,
-        "decay": 0.01,
-        "discount": 0.618
+        "decay": 0.001,
+        "discount": 0.7
     }
     taxi = Taxi(hyperparams)
-    taxi.run(5000)
+    taxi.run(10000)
     taxi.simulate()
